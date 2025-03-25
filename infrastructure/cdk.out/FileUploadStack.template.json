@@ -1,0 +1,924 @@
+{
+ "Resources": {
+  "FileUploadBucketDF219B4D": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+       }
+      }
+     ]
+    },
+    "CorsConfiguration": {
+     "CorsRules": [
+      {
+       "AllowedHeaders": [
+        "*"
+       ],
+       "AllowedMethods": [
+        "GET",
+        "PUT",
+        "POST",
+        "DELETE",
+        "HEAD"
+       ],
+       "AllowedOrigins": [
+        "*"
+       ],
+       "ExposedHeaders": [
+        "ETag"
+       ],
+       "MaxAge": 3000
+      }
+     ]
+    },
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    },
+    "Tags": [
+     {
+      "Key": "aws-cdk:auto-delete-objects",
+      "Value": "true"
+     }
+    ],
+    "VersioningConfiguration": {
+     "Status": "Enabled"
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/FileUploadBucket/Resource"
+   }
+  },
+  "FileUploadBucketPolicy4E395540": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "FileUploadBucketDF219B4D"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:*",
+       "Condition": {
+        "Bool": {
+         "aws:SecureTransport": "false"
+        }
+       },
+       "Effect": "Deny",
+       "Principal": {
+        "AWS": "*"
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "FileUploadBucketDF219B4D",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "FileUploadBucketDF219B4D",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "s3:DeleteObject*",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:PutBucketPolicy"
+       ],
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::GetAtt": [
+          "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+          "Arn"
+         ]
+        }
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "FileUploadBucketDF219B4D",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "FileUploadBucketDF219B4D",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/FileUploadBucket/Policy/Resource"
+   }
+  },
+  "FileUploadBucketAutoDeleteObjectsCustomResource327FBEFE": {
+   "Type": "Custom::S3AutoDeleteObjects",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+      "Arn"
+     ]
+    },
+    "BucketName": {
+     "Ref": "FileUploadBucketDF219B4D"
+    }
+   },
+   "DependsOn": [
+    "FileUploadBucketPolicy4E395540"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/FileUploadBucket/AutoDeleteObjectsCustomResource/Default"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ]
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-428927217146-us-east-1",
+     "S3Key": "b7f33614a69548d6bafe224d751a7ef238cde19097415e553fe8b63a4c8fd8a6.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x",
+    "Description": {
+     "Fn::Join": [
+      "",
+      [
+       "Lambda function for auto-deleting objects in ",
+       {
+        "Ref": "FileUploadBucketDF219B4D"
+       },
+       " S3 bucket."
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler",
+    "aws:asset:path": "asset.b7f33614a69548d6bafe224d751a7ef238cde19097415e553fe8b63a4c8fd8a6",
+    "aws:asset:property": "Code"
+   }
+  },
+  "GetSignedUrlFunctionServiceRoleB784CD37": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/GetSignedUrlFunction/ServiceRole/Resource"
+   }
+  },
+  "GetSignedUrlFunctionServiceRoleDefaultPolicyA5FA7F31": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:Abort*",
+        "s3:DeleteObject*",
+        "s3:GetBucket*",
+        "s3:GetObject*",
+        "s3:List*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "FileUploadBucketDF219B4D",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "FileUploadBucketDF219B4D",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "GetSignedUrlFunctionServiceRoleDefaultPolicyA5FA7F31",
+    "Roles": [
+     {
+      "Ref": "GetSignedUrlFunctionServiceRoleB784CD37"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/GetSignedUrlFunction/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "GetSignedUrlFunctionCE3F473A": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-428927217146-us-east-1",
+     "S3Key": "46c0b3bd94bbeb9b7b6c85140e8d6c6899a2db51a99e5ef9ddae0775cae2c552.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "BUCKET_NAME": {
+       "Ref": "FileUploadBucketDF219B4D"
+      }
+     }
+    },
+    "Handler": "getSignedUrl.handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "GetSignedUrlFunctionServiceRoleB784CD37",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "GetSignedUrlFunctionServiceRoleDefaultPolicyA5FA7F31",
+    "GetSignedUrlFunctionServiceRoleB784CD37"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/GetSignedUrlFunction/Resource",
+    "aws:asset:path": "asset.46c0b3bd94bbeb9b7b6c85140e8d6c6899a2db51a99e5ef9ddae0775cae2c552",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "ListFilesFunctionServiceRole5B274E19": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/ListFilesFunction/ServiceRole/Resource"
+   }
+  },
+  "ListFilesFunctionServiceRoleDefaultPolicy47A2232F": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:GetBucket*",
+        "s3:GetObject*",
+        "s3:List*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "FileUploadBucketDF219B4D",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "FileUploadBucketDF219B4D",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "ListFilesFunctionServiceRoleDefaultPolicy47A2232F",
+    "Roles": [
+     {
+      "Ref": "ListFilesFunctionServiceRole5B274E19"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/ListFilesFunction/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "ListFilesFunction1C81569A": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-428927217146-us-east-1",
+     "S3Key": "46c0b3bd94bbeb9b7b6c85140e8d6c6899a2db51a99e5ef9ddae0775cae2c552.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "BUCKET_NAME": {
+       "Ref": "FileUploadBucketDF219B4D"
+      }
+     }
+    },
+    "Handler": "listFiles.handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "ListFilesFunctionServiceRole5B274E19",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "ListFilesFunctionServiceRoleDefaultPolicy47A2232F",
+    "ListFilesFunctionServiceRole5B274E19"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/ListFilesFunction/Resource",
+    "aws:asset:path": "asset.46c0b3bd94bbeb9b7b6c85140e8d6c6899a2db51a99e5ef9ddae0775cae2c552",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "FileUploadApiAF719C21": {
+   "Type": "AWS::ApiGateway::RestApi",
+   "Properties": {
+    "Name": "File Upload Service"
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/FileUploadApi/Resource"
+   }
+  },
+  "FileUploadApiDeployment1DF15B337d5452c2a3bbb613f87790fd10445600": {
+   "Type": "AWS::ApiGateway::Deployment",
+   "Properties": {
+    "Description": "Automatically created by the RestApi construct",
+    "RestApiId": {
+     "Ref": "FileUploadApiAF719C21"
+    }
+   },
+   "DependsOn": [
+    "FileUploadApigetSignedUrlOPTIONS09BC369D",
+    "FileUploadApigetSignedUrlPOST8042CF80",
+    "FileUploadApigetSignedUrlC565D0A3",
+    "FileUploadApilistFilesGET06253CFE",
+    "FileUploadApilistFilesOPTIONS3328FE0C",
+    "FileUploadApilistFilesD712A304",
+    "FileUploadApiOPTIONSE5570B37"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/FileUploadApi/Deployment/Resource"
+   }
+  },
+  "FileUploadApiDeploymentStageprodBBFEA435": {
+   "Type": "AWS::ApiGateway::Stage",
+   "Properties": {
+    "DeploymentId": {
+     "Ref": "FileUploadApiDeployment1DF15B337d5452c2a3bbb613f87790fd10445600"
+    },
+    "RestApiId": {
+     "Ref": "FileUploadApiAF719C21"
+    },
+    "StageName": "prod"
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/FileUploadApi/DeploymentStage.prod/Resource"
+   }
+  },
+  "FileUploadApiOPTIONSE5570B37": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Origin,Accept,Referer,User-Agent'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
+        "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Max-Age": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Fn::GetAtt": [
+      "FileUploadApiAF719C21",
+      "RootResourceId"
+     ]
+    },
+    "RestApiId": {
+     "Ref": "FileUploadApiAF719C21"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/FileUploadApi/Default/OPTIONS/Resource"
+   }
+  },
+  "FileUploadApilistFilesD712A304": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "FileUploadApiAF719C21",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "listFiles",
+    "RestApiId": {
+     "Ref": "FileUploadApiAF719C21"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/FileUploadApi/Default/listFiles/Resource"
+   }
+  },
+  "FileUploadApilistFilesOPTIONS3328FE0C": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Origin,Accept,Referer,User-Agent'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
+        "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Max-Age": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "FileUploadApilistFilesD712A304"
+    },
+    "RestApiId": {
+     "Ref": "FileUploadApiAF719C21"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/FileUploadApi/Default/listFiles/OPTIONS/Resource"
+   }
+  },
+  "FileUploadApilistFilesGETApiPermissionFileUploadStackFileUploadApi5F127E31GETlistFiles49F1C1AA": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ListFilesFunction1C81569A",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:us-east-1:428927217146:",
+       {
+        "Ref": "FileUploadApiAF719C21"
+       },
+       "/",
+       {
+        "Ref": "FileUploadApiDeploymentStageprodBBFEA435"
+       },
+       "/GET/listFiles"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/FileUploadApi/Default/listFiles/GET/ApiPermission.FileUploadStackFileUploadApi5F127E31.GET..listFiles"
+   }
+  },
+  "FileUploadApilistFilesGET06253CFE": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "ListFilesFunction1C81569A",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "FileUploadApilistFilesD712A304"
+    },
+    "RestApiId": {
+     "Ref": "FileUploadApiAF719C21"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/FileUploadApi/Default/listFiles/GET/Resource"
+   }
+  },
+  "FileUploadApigetSignedUrlC565D0A3": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "FileUploadApiAF719C21",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "getSignedUrl",
+    "RestApiId": {
+     "Ref": "FileUploadApiAF719C21"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/FileUploadApi/Default/getSignedUrl/Resource"
+   }
+  },
+  "FileUploadApigetSignedUrlOPTIONS09BC369D": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Origin,Accept,Referer,User-Agent'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
+        "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Max-Age": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "FileUploadApigetSignedUrlC565D0A3"
+    },
+    "RestApiId": {
+     "Ref": "FileUploadApiAF719C21"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/FileUploadApi/Default/getSignedUrl/OPTIONS/Resource"
+   }
+  },
+  "FileUploadApigetSignedUrlPOSTApiPermissionFileUploadStackFileUploadApi5F127E31POSTgetSignedUrlD4FA9B7C": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "GetSignedUrlFunctionCE3F473A",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:us-east-1:428927217146:",
+       {
+        "Ref": "FileUploadApiAF719C21"
+       },
+       "/",
+       {
+        "Ref": "FileUploadApiDeploymentStageprodBBFEA435"
+       },
+       "/POST/getSignedUrl"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/FileUploadApi/Default/getSignedUrl/POST/ApiPermission.FileUploadStackFileUploadApi5F127E31.POST..getSignedUrl"
+   }
+  },
+  "FileUploadApigetSignedUrlPOST8042CF80": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "GetSignedUrlFunctionCE3F473A",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "FileUploadApigetSignedUrlC565D0A3"
+    },
+    "RestApiId": {
+     "Ref": "FileUploadApiAF719C21"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/FileUploadApi/Default/getSignedUrl/POST/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/22OwW7CMBBEv4W7cQMc2itQ9VY1Ch+AFmebLontKGsTRZb/vbKTClr1NG937J3Zyk1RyGIFI69V3a47ushwcqBaASOfA+9kOHjVohPHT7PQLKXtSE339TLPwwEYo+hAX2qQ4c0b5cia9PiRSxw0MZM1URBoGSrbYTKy3gNmioJ3Z2BGx3KfREBPDTgcYZKhQnb7nvLvBV+x7+yk0eTyD9PJQZNzZqiQrR8UptLiHd2XrZO50I+7XM4cozh6dlb/Z/6xysHeqMZB5M4pkUzz6+qHd713URhbo7zy023zIreFfF5dmWg9eONIo6xm/Qb1UQmrsgEAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "FileUploadStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "FileUploadApiEndpoint576839AA": {
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "FileUploadApiAF719C21"
+      },
+      ".execute-api.us-east-1.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "FileUploadApiDeploymentStageprodBBFEA435"
+      },
+      "/"
+     ]
+    ]
+   }
+  },
+  "ApiUrl": {
+   "Description": "API Gateway URL",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "FileUploadApiAF719C21"
+      },
+      ".execute-api.us-east-1.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "FileUploadApiDeploymentStageprodBBFEA435"
+      },
+      "/"
+     ]
+    ]
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}
