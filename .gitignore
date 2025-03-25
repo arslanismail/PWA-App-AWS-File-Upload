@@ -33,4 +33,13 @@ yarn-error.log*
 ngrok/
 *.pem
 *.key
-*.crt 
+*.crt
+
+# CDK
+infrastructure/cdk.out/
+infrastructure/cdk.context.json
+infrastructure/.cdk.staging/
+
+# Build artifacts
+*.zip
+*.tar.gz 

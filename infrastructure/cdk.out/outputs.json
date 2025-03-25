@@ -1,7 +1,0 @@
-{
-  "FileUploadStack": {
-    "FrontendConfig": "{\"apiUrl\":\"https://n4wrt8kby4.execute-api.us-east-1.amazonaws.com/prod/\",\"environment\":\"prod\"}",
-    "FileUploadApiEndpoint576839AA": "https://n4wrt8kby4.execute-api.us-east-1.amazonaws.com/prod/",
-    "ApiUrl": "https://n4wrt8kby4.execute-api.us-east-1.amazonaws.com/prod/"
-  }
-}
